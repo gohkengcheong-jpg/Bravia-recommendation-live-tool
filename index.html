@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Bravia TV Advisor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:#1D9E75;--green-light:#E1F5EE;--green-dark:#0F6E56;
+    --amber:#FAEEDA;--amber-txt:#633806;
+    --red-bg:#FCEBEB;--red-txt:#A32D2D;
+    --blue-bg:#E6F1FB;--blue-txt:#0C447C;--blue-mid:#185FA5;
+    --grey-border:#E2E2DC;--grey-text:#888880;
+    --body-text:#1A1A18;--white:#FFFFFF;
+    --card-radius:14px;--chip-radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'DM Sans',sans-serif;background:#F2F2EF;color:var(--body-text);min-height:100vh;max-width:480px;margin:0 auto;}
+  .progress-bar{display:flex;gap:5px;padding:16px 20px 0;}
+  .prog-seg{height:3px;flex:1;background:var(--grey-border);border-radius:2px;transition:background 0.3s;}
+  .prog-seg.active{background:var(--green);}
+  .screen{display:none;padding:20px;padding-bottom:40px;}
+  .screen.active{display:block;}
+  .step-label{font-size:11px;font-weight:500;color:var(--grey-text);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;}
+  .step-title{font-size:22px;font-weight:600;line-height:1.25;margin-bottom:4px;}
+  .step-sub{font-size:14px;color:var(--grey-text);margin-bottom:20px;}
+  .multi-hint{font-size:12px;color:var(--green-dark);background:var(--green-light);display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;margin-bottom:14px;font-weight:500;}
+  .chip-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:20px;}
+  .chip-grid.single-col{grid-template-columns:1fr;}
+  .chip{background:var(--white);border:1.5px solid var(--grey-border);border-radius:var(--chip-radius);padding:12px 13px;cursor:pointer;text-align:left;transition:all 0.15s;position:relative;user-select:none;}
+  .chip:active{transform:scale(0.97);}
+  .chip.selected{border-color:var(--green);background:var(--green-light);}
+  .chip .en{font-size:13px;font-weight:500;display:block;line-height:1.3;color:var(--body-text);}
+  .chip .bn{font-size:11px;color:var(--grey-text);display:block;margin-top:3px;}
+  .chip.selected .en{color:var(--green-dark);}
+  .chip.selected .bn{color:var(--green-dark);opacity:0.8;}
+  .chip .tick{position:absolute;top:8px;right:9px;font-size:13px;color:var(--green);display:none;}
+  .chip.selected .tick{display:block;}
+  .chip .obadge{position:absolute;top:7px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--green);color:white;font-size:11px;font-weight:600;display:none;align-items:center;justify-content:center;}
+  .chip.selected .obadge{display:flex;}
+  .btn-primary{width:100%;padding:15px;background:var(--green);color:white;border:none;border-radius:var(--chip-radius);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;}
+  .btn-primary:disabled{background:var(--grey-border);color:var(--grey-text);cursor:not-allowed;}
+  .btn-ghost{width:100%;padding:12px;background:transparent;color:var(--grey-text);border:1.5px solid var(--grey-border);border-radius:var(--chip-radius);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .back-link{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--grey-text);cursor:pointer;margin-bottom:18px;}
+  .result-card{background:var(--white);border:1.5px solid var(--grey-border);border-radius:var(--card-radius);padding:16px;margin-bottom:10px;}
+  .result-card.featured{border-color:var(--green);border-width:2px;}
+  .result-card.upsell-card{border-color:#378ADD;border-width:1.5px;}
+  .result-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+  .badge-rec{background:var(--green-light);color:var(--green-dark);}
+  .badge-up{background:var(--blue-bg);color:var(--blue-txt);}
+  .badge-alt{background:#F1EFE8;color:#5F5E5A;}
+  .model-name{font-size:20px;font-weight:600;margin-bottom:2px;}
+  .model-tier{font-size:12px;color:var(--grey-text);margin-bottom:12px;}
+  .size-pill{display:inline-flex;align-items:center;gap:6px;background:var(--blue-bg);border-radius:20px;padding:4px 12px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--blue-txt);}
+  .benefit-list{list-style:none;}
+  .benefit-list li{display:flex;gap:9px;padding:6px 0;border-top:1px solid var(--grey-border);font-size:13px;line-height:1.4;}
+  .benefit-list li:first-child{border-top:none;padding-top:0;}
+  .benefit-list li.matched{background:var(--green-light);margin:0 -16px;padding:6px 16px;border-top:1px solid #C5E8DC;}
+  .benefit-list li.matched:first-child{border-top:none;}
+  .bcheck{color:var(--green);flex-shrink:0;margin-top:1px;}
+  .benefit-list li.matched .bcheck{color:var(--green-dark);font-weight:700;}
+  .bbn{font-size:11px;color:var(--grey-text);display:block;margin-top:2px;}
+  .tip-box{background:var(--amber);border-radius:8px;padding:11px 12px;margin-top:12px;display:flex;gap:9px;}
+  .tip-label{font-size:10px;font-weight:600;color:var(--amber-txt);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:3px;}
+  .tip-text{font-size:12px;color:var(--amber-txt);line-height:1.5;}
+  .tip-bn{font-size:11px;color:var(--amber-txt);opacity:0.8;display:block;margin-top:4px;}
+  .feat-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+  .feat-pill{font-size:11px;font-weight:500;background:var(--blue-bg);color:var(--blue-mid);padding:3px 9px;border-radius:20px;}
+  .speak-box{background:var(--blue-bg);border-radius:8px;padding:10px 12px;margin-top:10px;}
+  .speak-label{font-size:10px;font-weight:600;color:var(--blue-txt);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+  .speak-text{font-size:13px;color:var(--blue-txt);font-weight:500;line-height:1.45;}
+  .rej-box{background:var(--red-bg);border-radius:8px;padding:11px 12px;margin-top:10px;}
+  .rej-label{font-size:10px;font-weight:600;color:var(--red-txt);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+  .rej-script{font-size:12px;color:#B03030;line-height:1.55;font-style:italic;}
+  .section-div{font-size:11px;color:var(--grey-text);text-align:center;margin:8px 0;text-transform:uppercase;letter-spacing:0.07em;}
+  .summary-line{font-size:12px;color:var(--grey-text);line-height:1.6;margin-bottom:14px;}
+  .summary-line strong{color:var(--body-text);}
+  .share-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:6px;}
+  .share-btn{padding:11px;background:var(--white);border:1.5px solid var(--grey-border);border-radius:var(--chip-radius);font-size:13px;font-weight:500;color:var(--grey-text);font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .copy-msg{font-size:12px;color:var(--green);text-align:center;margin-top:6px;min-height:18px;}
+</style>
+</head>
+<body>
+
+<!-- S1: USE CASE -->
+<div id="s1" class="screen active">
+  <div class="progress-bar"><div class="prog-seg active"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+  <div style="height:20px"></div>
+  <div class="step-label">Step 1 of 4 · প্রথম ধাপ</div>
+  <div class="step-title">What will you use the TV for?</div>
+  <div class="step-sub">TV কী কী কাজে ব্যবহার হবে?</div>
+  <div class="multi-hint">✓ Select all — first pick counts most</div>
+  <div class="chip-grid" id="use-chips">
+    <div class="chip" data-val="cinema" onclick="tog('use',this)"><span class="en">🎬 Movies &amp; Series</span><span class="bn">সিনেমা ও ওয়েব সিরিজ</span><span class="obadge"></span></div>
+    <div class="chip" data-val="gaming" onclick="tog('use',this)"><span class="en">🎮 Gaming</span><span class="bn">গেমিং</span><span class="obadge"></span></div>
+    <div class="chip" data-val="sports" onclick="tog('use',this)"><span class="en">⚽ Sports</span><span class="bn">খেলাধুলা</span><span class="obadge"></span></div>
+    <div class="chip" data-val="youtube" onclick="tog('use',this)"><span class="en">▶️ YouTube &amp; Streaming</span><span class="bn">ইউটিউব ও স্ট্রিমিং</span><span class="obadge"></span></div>
+  </div>
+  <button class="btn-primary" id="n1" disabled onclick="goTo('s2')">Next → পরবর্তী</button>
+</div>
+
+<!-- S2: LIGHTING -->
+<div id="s2" class="screen">
+  <div class="progress-bar"><div class="prog-seg active"></div><div class="prog-seg active"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+  <div style="height:20px"></div>
+  <div class="back-link" onclick="goTo('s1')">← Back</div>
+  <div class="step-label">Step 2 of 4 · দ্বিতীয় ধাপ</div>
+  <div class="step-title">How is your room lighting?</div>
+  <div class="step-sub">আপনার ঘরের আলোর পরিবেশ কেমন?</div>
+  <div class="chip-grid single-col" id="lighting-chips">
+    <div class="chip" data-val="dim" onclick="pickOne('lighting',this)"><span class="en">🌥️ Dim or low light</span><span class="bn">মৃদু বা কম আলো</span><span class="tick">✓</span></div>
+    <div class="chip" data-val="natural" onclick="pickOne('lighting',this)"><span class="en">🌤️ Bright with natural light</span><span class="bn">প্রাকৃতিক আলোয় উজ্জ্বল</span><span class="tick">✓</span></div>
+    <div class="chip" data-val="bright" onclick="pickOne('lighting',this)"><span class="en">☀️ Very bright — hard to see the screen sometimes</span><span class="bn">অনেক উজ্জ্বল — কখনো স্ক্রিন দেখতে কষ্ট হয়</span><span class="tick">✓</span></div>
+  </div>
+  <button class="btn-primary" id="n2" disabled onclick="goTo('s3')">Next → পরবর্তী</button>
+</div>
+
+<!-- S3: VIEWING DISTANCE -->
+<div id="s3" class="screen">
+  <div class="progress-bar"><div class="prog-seg active"></div><div class="prog-seg active"></div><div class="prog-seg active"></div><div class="prog-seg"></div></div>
+  <div style="height:20px"></div>
+  <div class="back-link" onclick="goTo('s2')">← Back</div>
+  <div class="step-label">Step 3 of 4 · তৃতীয় ধাপ</div>
+  <div class="step-title">How far will you sit from the TV?</div>
+  <div class="step-sub">TV থেকে কত দূরে বসবেন?</div>
+  <div class="chip-grid single-col" id="dist-chips">
+    <div class="chip" data-val="close" onclick="pickOne('dist',this)"><span class="en">📏 Under 1.5m — small bedroom or study</span><span class="bn">১.৫ মিটারের কম</span><span class="tick">✓</span></div>
+    <div class="chip" data-val="medium" onclick="pickOne('dist',this)"><span class="en">📏 1.5m – 2.0m — standard living room</span><span class="bn">১.৫ – ২.০ মিটার</span><span class="tick">✓</span></div>
+    <div class="chip" data-val="far" onclick="pickOne('dist',this)"><span class="en">📏 2.0m – 2.5m — large living room</span><span class="bn">২.০ – ২.৫ মিটার</span><span class="tick">✓</span></div>
+    <div class="chip" data-val="vfar" onclick="pickOne('dist',this)"><span class="en">📏 Over 2.5m — open plan or hall</span><span class="bn">২.৫ মিটারের বেশি</span><span class="tick">✓</span></div>
+  </div>
+  <button class="btn-primary" id="n3" disabled onclick="goTo('s4')">Next → পরবর্তী</button>
+</div>
+
+<!-- S4: PRIORITIES -->
+<div id="s4" class="screen">
+  <div class="progress-bar"><div class="prog-seg active"></div><div class="prog-seg active"></div><div class="prog-seg active"></div><div class="prog-seg active"></div></div>
+  <div style="height:20px"></div>
+  <div class="back-link" onclick="goTo('s3')">← Back</div>
+  <div class="step-label">Step 4 of 4 · চতুর্থ ধাপ</div>
+  <div class="step-title">What matters most?</div>
+  <div class="step-sub">কোনগুলো গুরুত্বপূর্ণ?</div>
+  <div class="multi-hint">✓ Select up to 2 — first pick counts most · সর্বোচ্চ ২টি বেছে নিন</div>
+  <div class="chip-grid" id="prio-chips">
+    <div class="chip" data-val="picture" onclick="tog('prio',this)"><span class="en">🖼️ Best Picture</span><span class="bn">সেরা ছবির মান</span><span class="obadge"></span></div>
+    <div class="chip" data-val="sound" onclick="tog('prio',this)"><span class="en">🔊 Great Sound</span><span class="bn">দুর্দান্ত শব্দ</span><span class="obadge"></span></div>
+    <div class="chip" data-val="brightness" onclick="tog('prio',this)"><span class="en">☀️ Brightness</span><span class="bn">উজ্জ্বলতা</span><span class="obadge"></span></div>
+    <div class="chip" data-val="value" onclick="tog('prio',this)"><span class="en">💰 Best Value</span><span class="bn">সাশ্রয়ী মূল্য</span><span class="obadge"></span></div>
+    <div class="chip" data-val="motion" onclick="tog('prio',this)"><span class="en">⚡ Smooth Motion</span><span class="bn">মসৃণ গতি</span><span class="obadge"></span></div>
+    <div class="chip" data-val="colour" onclick="tog('prio',this)"><span class="en">🎨 Rich Colours</span><span class="bn">প্রাকৃতিক রং</span><span class="obadge"></span></div>
+  </div>
+  <button class="btn-primary" id="n4" disabled onclick="recommend()">See Recommendation → সুপারিশ দেখুন</button>
+</div>
+
+<!-- S5: RESULTS -->
+<div id="s5" class="screen">
+  <div class="back-link" onclick="goTo('s4')">← Back</div>
+  <div id="summary-line" class="summary-line"></div>
+  <div id="result-area"></div>
+  <div class="share-row">
+    <button class="share-btn" onclick="copyResult()">📋 Copy text</button>
+    <button class="share-btn" onclick="shareResult()">↑ Share</button>
+  </div>
+  <div class="copy-msg" id="copy-msg"></div>
+  <button class="btn-ghost" onclick="restart()">↺ New customer · নতুন গ্রাহক</button>
+</div>
+
+<script>
+const S={use:[],prio:[],lighting:null,dist:null};
+const wt=i=>i===0?3:i===1?2:1;
+
+const MODELS={
+  bravia2m2:{
+    name:'Bravia 2M2',
+    tier:'Direct LED · 4K · 60Hz · Dolby Atmos',
+    level:1,miniled:false,
+    strengths:['value','family','youtube','music'],
+    benefits:[
+      {tags:['picture','cinema','family'],en:'Every show looks sharper and more detailed — even older local content is upscaled to near-4K quality',bn:'প্রতিটি শো আরও স্পষ্ট ও বিস্তারিত দেখায়'},
+      {tags:['youtube','family','value'],en:'Google TV with all streaming apps built in — YouTube, Netflix, and more',bn:'Google TV-তে সব স্ট্রিমিং অ্যাপ built-in'},
+      {tags:['motion','sports'],en:'Scenes and sports stay clear and easy to follow — great for everyday viewing',bn:'দৃশ্য ও খেলাধুলা স্পষ্ট এবং সহজে অনুসরণযোগ্য'},
+      {tags:['sound','family','cinema'],en:'Sound fills the room with Dolby Atmos',bn:'Dolby Atmos-এ শব্দ ঘর ভর্তি করে'},
+      {tags:['colour','picture'],en:'Sony picture processing makes colours look natural and true to life',bn:'Sony প্রসেসিং রঙকে স্বাভাবিক ও বাস্তবসম্মত করে'},
+      {tags:['value'],en:'Sony quality and reliability at the most accessible price',bn:'সবচেয়ে সাশ্রয়ী মূল্যে Sony মান'},
+    ],
+    tip:'Play a local broadcast or YouTube video to show the details. Then play Dolby Atmos — Amaze to highlight the surround sound.',
+    tipBn:'একটি local broadcast বা YouTube ভিডিও চালান। তারপর Dolby Atmos — Amaze চালান।',
+    upsellScript:'Would you want sports and fast action to look smoother, have more natural colors and get Dolby Vision HDR? Let me show you the Bravia 3M2',
+    upsellPills:['Motionflow XR','120Hz','Triluminos Pro','XR Processor'],
+    rejection:{
+      show:true,
+      script:'"This is Sony\'s most accessible model — and it still has Sony\'s own processor, Google TV, and Dolby Atmos. You\'re not compromising on the Sony experience — you\'re getting it at the entry price."'
+    }
+  },
+  bravia3m2:{
+    name:'Bravia 3M2',
+    tier:'4K · 120Hz · XR Processor · Dolby Vision',
+    level:2,miniled:false,
+    strengths:['value','family','cinema','music','motion','sports','gaming'],
+    benefits:[
+      {tags:['colour','picture','cinema'],en:'This TV can generate even more shades of colour — images look richer and more lifelike',bn:'এই TV আরও বেশি শেড তৈরি করতে পারে'},
+      {tags:['motion','sports','gaming'],en:'Faster 120Hz screen keeps fast action and games sharp and blur-free',bn:'120Hz স্ক্রিন দ্রুত অ্যাকশন ও গেম তীক্ষ্ণ ও blur-free রাখে'},
+      {tags:['sound','family','music'],en:'Sound is cleaner and less distorted at higher volumes',bn:'বেশি ভলিউমে শব্দ পরিষ্কার'},
+      {tags:['gaming'],en:'PS5 and gaming consoles automatically switch to the best settings',bn:'PS5 স্বয়ংক্রিয়ভাবে সেরা সেটিংসে স্যুইচ করে'},
+      {tags:['value','picture'],en:"Sony's XR Processor gives the picture a level of detail and accuracy you can see immediately",bn:"Sony-র XR প্রসেসর ছবিতে বিস্তারিততা দেয় যা সাথে সাথে দেখা যায়"},
+      {tags:['youtube','family'],en:'Google TV with all streaming apps built in — YouTube, Netflix, and more',bn:'Google TV-তে সব স্ট্রিমিং অ্যাপ built-in'},
+    ],
+    tip:'Play a nature scene side-by-side with the 2M2 and let Triluminos Pro colour speak for itself. Then play motion content side-by-side and point out the juddering on the 2M2.',
+    tipBn:'2M2-এর পাশে একটি প্রকৃতির দৃশ্য চালান। তারপর motion কন্টেন্ট পাশাপাশি চালান।',
+    upsellScript:'Would you want to see how a brighter TV can improve all content? Let me show you the Bravia 5',
+    upsellPills:['Mini LED','XR Backlight Master Drive','Acoustic Multi-Audio'],
+    rejection:{
+      show:false,
+      script:'Acknowledge that you understand, and invite them to see a lower tier model.'
+    }
+  },
+  bravia5:{
+    name:'Bravia 5',
+    tier:'Mini LED · 4K · 120Hz · XR Processor',
+    level:3,miniled:true,
+    strengths:['cinema','colour','brightness','sports','music','youtube','picture'],
+    benefits:[
+      {tags:['brightness','sports','family'],en:'The picture stays bright and vivid in a bright room — no more washed-out screen in daylight',bn:'উজ্জ্বল ঘরেও ছবি প্রাণবন্ত — দিনের আলোতে স্ক্রিন ধুয়ে যায় না'},
+      {tags:['colour','picture','cinema'],en:'Colours are true and accurate so every scene looks exactly as the director intended',bn:'রঙ সত্য ও নির্ভুল — পরিচালকের উদ্দেশ্য অনুযায়ী'},
+      {tags:['motion','sports','gaming'],en:'Fast sports and action perfectly smooth — without losing the brightness Mini LED delivers',bn:'দ্রুত খেলাধুলা ও অ্যাকশন নিখুঁতভাবে মসৃণ'},
+      {tags:['sound','music','cinema'],en:'Sound matches picture on screen — you hear exactly where things are happening',bn:'শব্দ ছবির সাথে মেলে — স্ক্রিনে যা হচ্ছে ঠিক সেখান থেকে শুনতে পান'},
+      {tags:['youtube','family'],en:'Google TV with all streaming apps built in — YouTube, Netflix, and more',bn:'Google TV-তে সব স্ট্রিমিং অ্যাপ built-in'},
+      {tags:['gaming','motion'],en:'Fast 120Hz refresh rate for smooth gameplay and sports',bn:'মসৃণ gameplay ও sports-এর জন্য দ্রুত 120Hz রিফ্রেশ রেট'},
+    ],
+    tip:"Play a night sky scene side-by-side with the 3M2. Brightness difference is visible in seconds. Point out the difference and say: 'The brightness improvement is visible in any content.'",
+    tipBn:'3M2-এর পাশে একটি রাতের আকাশের দৃশ্য চালান। উজ্জ্বলতার পার্থক্য সেকেন্ডেই দৃশ্যমান।',
+    upsellScript:'Would you like to see what an even brighter TV can do? Let me show you the Bravia 7',
+    upsellPills:['Brighter Mini LED','XR Backlight Master Drive','Acoustic Multi-Audio'],
+    rejection:{
+      show:false,
+      script:'Acknowledge that you understand, and invite them to see a lower tier model.'
+    }
+  },
+  bravia7:{
+    name:'Bravia 7',
+    tier:'Mini LED · 4K · 120Hz · High Brightness',
+    level:4,miniled:true,
+    strengths:['gaming','motion','cinema','brightness','colour','picture','sound'],
+    benefits:[
+      {tags:['picture','cinema','brightness'],en:'HDR scenes really pop — your movies look just like the cinema',bn:'HDR দৃশ্য সত্যিই প্রাণবন্ত — সিনেমার মতো দেখায়'},
+      {tags:['colour','cinema'],en:'Colours stay rich and vivid even in the darkest parts of the screen',bn:'স্ক্রিনের সবচেয়ে অন্ধকার অংশেও রঙ সমৃদ্ধ'},
+      {tags:['motion','sports'],en:'Fast sports and action is perfectly smooth while maintaining high brightness',bn:'উচ্চ উজ্জ্বলতা বজায় রেখে দ্রুত খেলাধুলা নিখুঁতভাবে মসৃণ'},
+      {tags:['gaming'],en:'Gaming on PS5 is the best it can be — 4K 120fps, high brightness for HDR gaming',bn:'PS5-এ গেমিং সর্বোচ্চ — 4K 120fps, HDR গেমিংয়ের জন্য উচ্চ উজ্জ্বলতা'},
+      {tags:['sound','music','cinema'],en:'Sound matches picture and travels around you',bn:'শব্দ ছবির সাথে মেলে এবং চারপাশে ভ্রমণ করে'},
+      {tags:['value'],en:'Premium Mini LED with exceptional value — high peak brightness for any room condition',bn:'প্রিমিয়াম Mini LED — যেকোনো ঘরের অবস্থায় উচ্চ peak brightness'},
+      {tags:['youtube','family'],en:'Google TV with all streaming apps built in — YouTube, Netflix, and more',bn:'Google TV-তে সব স্ট্রিমিং অ্যাপ built-in'},
+    ],
+    tip:'Play a night sky scene side-by-side with the Bravia 5. Brightness difference is visible in seconds. Then play Lennon Stella content or a music video on both TVs — cycle between audio by muting one TV first, then the next.',
+    tipBn:'Bravia 5-এর পাশে রাতের আকাশের দৃশ্য চালান। তারপর উভয় TV-তে Lennon Stella চালান।',
+    upsellScript:'Would you like to see how a no compromise TV looks like?',
+    upsellPills:['Highest Brightness Mini LED','Cognitive Processor XR','Acoustic Multi-Audio+'],
+    rejection:{
+      show:false,
+      script:'Acknowledge that you understand, and invite them to see a lower tier model.'
+    }
+  },
+  bravia9:{
+    name:'Bravia 9',
+    tier:'Mini LED · 4K · 120Hz · Highest Brightness · Ultimate Contrast',
+    level:5,miniled:true,
+    strengths:['cinema','picture','brightness','colour','gaming','motion','sound'],
+    benefits:[
+      {tags:['brightness','sports','cinema'],en:'The brightest TV Sony has ever made — sunlight, HDR highlights, and stadium lighting look real, not digital',bn:'Sony-র সবচেয়ে উজ্জ্বল TV'},
+      {tags:['picture','family'],en:'The picture looks the same from any seat in the room — no colour shift or fading from the side',bn:'ঘরের যেকোনো আসন থেকে ছবি একই রকম'},
+      {tags:['motion','sports','gaming'],en:'The ultimate sports experience — every moment of fast play is perfectly sharp and the picture stays strikingly bright',bn:'চূড়ান্ত স্পোর্টস অভিজ্ঞতা'},
+      {tags:['sound','music','cinema'],en:'The Bravia 9 generates additional sound with the frame and also projects it upwards — for sound that travels around you',bn:'Bravia 9 ফ্রেম দিয়ে অতিরিক্ত শব্দ তৈরি করে'},
+      {tags:['colour','picture','cinema'],en:"Billions of colours reproduced with perfect accuracy — QLED with Sony's Cognitive Processor XR",bn:'বিলিয়ন রঙ নিখুঁত নির্ভুলতায়'},
+      {tags:['gaming'],en:'4K 120fps gaming with zero lag, VRR, and auto game mode for PS5',bn:'zero lag সহ 4K 120fps গেমিং'},
+      {tags:['youtube','family'],en:'Google TV with all streaming apps built in — YouTube, Netflix, and more',bn:'Google TV-তে সব স্ট্রিমিং অ্যাপ built-in'},
+    ],
+    tip:'Play HDR movie content side-by-side with the Bravia 7. Brightness difference is visible in seconds.',
+    tipBn:'Bravia 7-এর পাশে HDR movie কন্টেন্ট চালান। উজ্জ্বলতার পার্থক্য সেকেন্ডেই দৃশ্যমান।',
+    upsellScript:null,
+    upsellPills:[],
+    rejection:{
+      show:false,
+      script:'Acknowledge that you understand, and invite them to see a lower tier model.'
+    }
+  }
+};
+
+const SIZE_MAP={
+  bravia2m2:{close:'50"',medium:'55"',far:'65"',vfar:'75"'},
+  bravia3m2:{close:'55"',medium:'55" – 65"',far:'65" – 75"',vfar:'75" – 85"'},
+  bravia5:  {close:'55"',medium:'55" – 65"',far:'65" – 75"',vfar:'75" – 85" (98" available)'},
+  bravia7:  {close:'55"',medium:'55" – 65"',far:'65" – 75"',vfar:'75" – 85"'},
+  bravia9:  {close:'65"',medium:'65"',far:'65" – 75"',vfar:'75" – 85"'},
+};
+
+const LIGHT_PREF={dim:'bravia5',natural:'bravia7',bright:'bravia9'};
+
+function tog(group,el){
+  const arr=S[group];
+  const val=el.dataset.val;
+  const idx=arr.indexOf(val);
+  if(idx>-1){
+    arr.splice(idx,1);
+    el.classList.remove('selected');
+  } else {
+    // Priority limited to 2 selections
+    if(group==='prio'&&arr.length>=2) return;
+    arr.push(val);
+    el.classList.add('selected');
+  }
+  document.querySelectorAll(`#${group}-chips .chip`).forEach(c=>{
+    const pos=arr.indexOf(c.dataset.val);
+    const b=c.querySelector('.obadge');
+    b.textContent=pos>-1?pos+1:'';
+  });
+  document.getElementById(group==='use'?'n1':'n4').disabled=arr.length===0;
+}
+
+function pickOne(group,el){
+  document.querySelectorAll(`#${group}-chips .chip`).forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  S[group]=el.dataset.val;
+  document.getElementById(group==='lighting'?'n2':'n3').disabled=false;
+}
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function restart(){
+  S.use=[];S.prio=[];S.lighting=null;S.dist=null;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.obadge').forEach(b=>b.textContent='');
+  ['n1','n2','n3','n4'].forEach(id=>document.getElementById(id).disabled=true);
+  goTo('s1');
+}
+
+let lastRec=null;
+
+function scoreModel(key,m){
+  let score=0;
+  S.use.forEach((u,i)=>{if(m.strengths.includes(u))score+=wt(i);});
+  S.prio.forEach((p,i)=>{if(m.strengths.includes(p))score+=wt(i);});
+  const bi=S.prio.indexOf('brightness');
+  if(bi>-1&&m.miniled){
+    score+=wt(bi);
+    if(bi===0&&(key==='bravia7'||key==='bravia9')) score+=2;
+  }
+  if(bi>-1&&!m.miniled)score-=1;
+  if(S.lighting&&m.miniled){
+    const pref=LIGHT_PREF[S.lighting];
+    // If brightness is first priority, skip dim lighting bonus — customer is explicitly asking for more brightness
+    const skipDimBonus = bi===0 && S.lighting==='dim';
+    if(!skipDimBonus && key===pref) score+=3;
+    else if(MODELS[key].level>MODELS[pref].level) score-=1;
+  }
+  if((S.lighting==='natural'||S.lighting==='bright')&&!m.miniled)score-=2;
+  return score;
+}
+
+function recommend(){
+  let best=null,bestScore=-Infinity;
+  Object.entries(MODELS).forEach(([k,m])=>{
+    const sc=scoreModel(k,m);
+    if(sc>bestScore||(sc===bestScore&&best&&m.level<MODELS[best].level)){bestScore=sc;best=k;}
+  });
+  if(!best)best='bravia3m2';
+
+  // Value cap at Bravia 5
+  if(S.prio.includes('value')&&MODELS[best].level>3) best='bravia5';
+  // Very bright room floor — even value customers need Mini LED in a very bright room
+  if(S.lighting==='bright'&&S.prio.includes('value')&&MODELS[best].level<3) best='bravia5';
+  // YouTube only cap — casual streaming doesn't need Mini LED unless bright room or brightness priority
+  const youtubeOnly=S.use.length===1&&S.use[0]==='youtube';
+  if(youtubeOnly&&S.lighting!=='bright'&&!S.prio.includes('brightness')&&MODELS[best].level>2)
+    best='bravia3m2';
+  // Bravia 9 gate: very bright + brightness priority + at least one premium use case
+  const premiumUse=['cinema','gaming','sports'];
+  const hasPremiumUse=S.use.some(u=>premiumUse.includes(u));
+  if(best==='bravia9'&&!(S.lighting==='bright'&&S.prio.includes('brightness')&&hasPremiumUse)) best='bravia7';
+
+  const rec=MODELS[best];
+  const upKey=Object.keys(MODELS).find(k=>MODELS[k].level===rec.level+1);
+  const dnKey=Object.keys(MODELS).find(k=>MODELS[k].level===rec.level-1);
+  const up=upKey?MODELS[upKey]:null;
+  const dn=dnKey?MODELS[dnKey]:null;
+  lastRec={rec,up,dn,recKey:best,upKey,dnKey};
+
+  const dL={close:'Under 1.5m',medium:'1.5m – 2.0m',far:'2.0m – 2.5m',vfar:'Over 2.5m'};
+  const lL={dim:'Dim / controlled',natural:'Natural light',bright:'Very bright'};
+  document.getElementById('summary-line').innerHTML=`Use: <strong>${S.use.join(', ')}</strong> · Lighting: <strong>${lL[S.lighting]||'—'}</strong> · Distance: <strong>${dL[S.dist]||'—'}</strong> · Priority: <strong>${S.prio.join(', ')}</strong>`;
+
+  let html=renderCard(rec,best,'rec','⭐ Recommended',true,null);
+  if(up){html+=renderCard(up,upKey,'up','',false,rec);}
+  if(dn){html+=`<div class="section-div">↓ Lower option</div>`;html+=renderCard(dn,dnKey,'alt','💡 '+dn.name+' is also a great option',false,null);}
+
+  document.getElementById('result-area').innerHTML=html;
+  document.getElementById('copy-msg').textContent='';
+  goTo('s5');
+}
+
+function renderCard(m,key,type,badge,featured,recModel){
+  const count=featured?4:3;
+  const bc={rec:'badge-rec',up:'badge-up',alt:'badge-alt'}[type];
+  const cardClass=type==='up'?'result-card upsell-card':featured?'result-card featured':'result-card';
+  const interests=new Set([...S.use,...S.prio]);
+  const scored=m.benefits.map(b=>({...b,score:b.tags.filter(t=>interests.has(t)).length}));
+  scored.sort((a,b)=>b.score-a.score);
+  const items=scored.slice(0,count).map(b=>{
+    const isM=b.score>0&&featured;
+    return `<li ${isM?'class="matched"':''}><span class="bcheck">${isM?'★':'✓'}</span><span>${b.en}<span class="bbn">${b.bn}</span></span></li>`;
+  }).join('');
+
+  const sizeHtml=featured&&S.dist&&SIZE_MAP[key]?`<div class="size-pill">📐 Recommended size: ${SIZE_MAP[key][S.dist]}</div><br>`:'';
+  const tipHtml=featured?`<div class="tip-box"><span style="font-size:16px;flex-shrink:0">💡</span><div><span class="tip-label">Demo tip · ডেমো টিপ</span><span class="tip-text">${m.tip}<span class="tip-bn">${m.tipBn}</span></span></div></div>`:'';
+
+  // Upsell card: script from rec model, pills from upsell model
+  let upsellTopHtml='';
+  let upsellBottomHtml='';
+  if(type==='up'&&recModel&&recModel.upsellScript){
+    const pills=m.upsellPills.map(p=>`<span class="feat-pill">${p}</span>`).join('');
+    upsellTopHtml=`
+      <div style="background:#E6F1FB;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:600;color:#0C447C;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">💬 Try to upsell customer to ${m.name}</div>
+        <div style="font-size:15px;font-weight:600;color:#0C447C;line-height:1.4;">"Would you like to see and compare the ${recModel.name} to ${m.name}?"</div>
+      </div>`;
+    upsellBottomHtml=`<div class="feat-row">${pills}</div>`;
+  }
+
+  // Price objection — moved to top of budget card
+  let rejHtml='';
+  if(type==='alt'){
+    rejHtml=`<div style="background:#FCEBEB;border-radius:10px;padding:12px 14px;margin-bottom:14px;"><div style="font-size:10px;font-weight:600;color:#A32D2D;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">💬 If customer says "too expensive":</div><div style="font-size:15px;font-weight:600;color:#A32D2D;line-height:1.4;">${m.rejection.script}</div></div>`;
+  }
+
+  return `<div class="${cardClass}">${rejHtml}${upsellTopHtml}<div class="model-name" style="font-size:${type==='up'?'17px':'20px'}">${m.name}</div><div class="model-tier">${m.tier}</div>${sizeHtml}<ul class="benefit-list">${items}</ul>${tipHtml}${upsellBottomHtml}</div>`;
+}
+
+function buildCopyText(){
+  if(!lastRec)return'';
+  const{rec,up,dn}=lastRec;
+  const dL={close:'Under 1.5m',medium:'1.5m – 2.0m',far:'2.0m – 2.5m',vfar:'Over 2.5m'};
+  const lL={dim:'Dim / controlled',natural:'Natural light',bright:'Very bright'};
+  const interests=new Set([...S.use,...S.prio]);
+  let t=`BRAVIA RECOMMENDATION\n`;
+  t+=`Use: ${S.use.join(', ')} | Lighting: ${lL[S.lighting]||'—'} | Distance: ${dL[S.dist]||'—'} | Priority: ${S.prio.join(', ')}\n\n`;
+  t+=`RECOMMENDED: ${rec.name} (${rec.tier})\n`;
+  const sc2=rec.benefits.map(b=>({...b,score:b.tags.filter(tg=>interests.has(tg)).length}));
+  sc2.sort((a,b)=>b.score-a.score);
+  sc2.slice(0,4).forEach(b=>t+=`• ${b.en}\n`);
+  t+=`\nDEMO TIP: ${rec.tip}\n`;
+  if(up&&up.upsellScript){
+    t+=`\nUPSELL → ${up.name}:\n`;
+    up.upsellPills.forEach(p=>t+=`• ${p}\n`);
+    t+=`Say: "${up.upsellScript}"\n`;
+  }
+  if(dn)t+=`\nIF PRICE OBJECTION — ${dn.rejection.show?dn.rejection.script:'Acknowledge and show '+dn.name}\n`;
+  return t;
+}
+
+function copyResult(){
+  const text=buildCopyText();
+  navigator.clipboard.writeText(text).then(()=>{
+    document.getElementById('copy-msg').textContent='✓ Copied to clipboard';
+    setTimeout(()=>document.getElementById('copy-msg').textContent='',2500);
+  }).catch(()=>{document.getElementById('copy-msg').textContent='Copy not supported — use Share instead';});
+}
+
+function shareResult(){
+  const text=buildCopyText();
+  if(navigator.share){navigator.share({title:'Bravia Recommendation',text}).catch(()=>{});}
+  else{copyResult();}
+}
+</script>
+</body>
+</html>
